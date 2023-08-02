@@ -3,13 +3,13 @@ package jwt
 import (
 	"bytes"
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 )
 
 func decodeFromBase64(data []byte) []byte {
 	buffer := bytes.NewBuffer(data)
 	dec := base64.NewDecoder(base64.RawURLEncoding, buffer)
-	out, err := ioutil.ReadAll(dec)
+	out, err := io.ReadAll(dec)
 	if err != nil {
 		return nil
 	}
