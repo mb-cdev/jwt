@@ -2,6 +2,9 @@ package jwt_test
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"io"
 	"strings"
 	"testing"
 
@@ -95,5 +98,54 @@ func TestSamePayloadHeaderAndHashFunctionDifferentSecret(t *testing.T) {
 
 	if bytes.Equal(j1.Bytes(), j2.Bytes()) {
 		t.Error("tokens are equal")
+	}
+}
+
+func TestBadSignatureInFromString(t *testing.T) {
+	j := jwt.New(jwt.AlgoHS512, []byte{1, 2, 3, 4})
+	jString := j.String()
+
+	//add some string at the end of the token - to make it fake
+	jString += "-d"
+
+	_, err := jwt.FromString(jString, []byte{1, 2, 3, 4})
+	if err != jwt.ErrBadSignature {
+		t.Errorf("wrong error, excepted: %s got %s", jwt.ErrBadSignature, err)
+	}
+}
+
+func TestBadSignatureInChangedPayload(t *testing.T) {
+	secret := []byte{1, 2, 3, 4}
+	j := jwt.New(jwt.AlgoHS512, secret)
+	j.SetPayload("test", "not changed")
+
+	originalToken := j.String()
+	originalTokenParts := strings.Split(originalToken, ".")
+
+	rd := bytes.NewReader([]byte(originalTokenParts[1]))
+	dec := base64.NewDecoder(base64.RawURLEncoding, rd)
+	payload, _ := io.ReadAll(dec)
+	payloadMap := make(map[string]any, 1)
+	json.Unmarshal(payload, &payloadMap)
+	payloadMap["test"] = "changed"
+
+	payloadChanged, _ := json.Marshal(payloadMap)
+
+	w := bytes.NewBuffer([]byte{})
+	enc := base64.NewEncoder(base64.RawURLEncoding, w)
+	enc.Write(payloadChanged)
+	enc.Close()
+
+	fakeToken := strings.Join(
+		[]string{
+			originalTokenParts[0],
+			w.String(),
+			originalTokenParts[2],
+		},
+		".",
+	)
+	_, err := jwt.FromString(fakeToken, secret)
+	if err != jwt.ErrBadSignature {
+		t.Errorf("wrong error returned, expected: %s got %s", jwt.ErrBadSignature, err)
 	}
 }
