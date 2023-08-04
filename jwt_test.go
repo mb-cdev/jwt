@@ -72,6 +72,60 @@ func TestJwtSignature(t *testing.T) {
 	}
 }
 
+func TestIsSignatureValid(t *testing.T) {
+	testingTable := []struct {
+		testId          string
+		algo            string
+		secret          []byte
+		token           string
+		expectedIsValid bool
+	}{
+		{
+			testId:          "tokenTest#1",
+			algo:            "",
+			secret:          []byte{1, 2, 3, 4, 5, 6, 7},
+			token:           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkxIjoxMjMsImtleTIiOiJ0ZXN0MTIzIn0.Gr3aT4thU9ThW-udCxIRyUnMSaU1CwCCjdEFQqX-m-4",
+			expectedIsValid: true,
+		},
+		{
+			testId:          "tokenTest#2",
+			algo:            "",
+			secret:          []byte{1, 2, 3, 4, 5, 6, 7},
+			token:           "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJrZXkxIjoxMjMsImtleTIiOiJ0ZXN0MTIzIn0.x0m_mSAWEp3jNQjPC9Gt1Mns3NUekEt5s3Vsg5s1uuIiPjS9oVkPJTmVr6hChCFZP5k-6iVNdWtoMjXAUp9SUQ",
+			expectedIsValid: true,
+		},
+		{
+			testId:          "tokenTest#3",
+			algo:            "",
+			secret:          []byte{7, 6, 5, 4, 3, 2, 1},
+			token:           "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJrZXkyIjoidGVzdDEyMyJ9.4WRMmmBUZlBjlY38m7eyiIt35chbxln_o_TDgKfFCjZ4iRADNDqGuUwbfDn-HZhZU6D7OWuzxFowm-KjBhO-Vw",
+			expectedIsValid: true,
+		},
+		{
+			testId:          "tokenTest#4",
+			algo:            "",
+			secret:          []byte{7, 6, 5, 4, 3, 2, 1},
+			token:           "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.e301.pupOk_kKR3k1O2e--olG3Alfiteq6Usu03RHGa2-RVRO5_qsCkltpr3htotv0q4N3IY7MTywEeE0zjXp2_UGCA",
+			expectedIsValid: false,
+		},
+		{
+			testId:          "tokenTest#5",
+			algo:            jwt.AlgoHS256,
+			secret:          []byte{1, 2, 3, 4, 5, 6, 7},
+			token:           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.dNytVsNoufC7XNn3CXbkdorOqGwfCv2MfPVIcRJykFk",
+			expectedIsValid: true,
+		},
+	}
+
+	for _, testCase := range testingTable {
+		isValid, _ := jwt.IsTokenValidFromString(testCase.algo, testCase.token, testCase.secret)
+
+		if isValid != testCase.expectedIsValid {
+			t.Errorf("%s: wrong isValid value, got %t expected %t", testCase.testId, isValid, testCase.expectedIsValid)
+		}
+	}
+}
+
 func TestSamePayloadHeaderAndSecretDifferentHashFunction(t *testing.T) {
 	secret := []byte{1, 2, 3, 4}
 

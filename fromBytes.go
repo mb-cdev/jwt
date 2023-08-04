@@ -46,20 +46,8 @@ func FromBytes(data []byte, secret []byte) (*Jwt, error) {
 		return nil, ErrWrongAlgo
 	}
 
-	hashFunc, errHashFunction := getHashFunction(algoString)
-	if errHashFunction != nil {
-		return nil, errHashFunction
-	}
-
-	signatureRecalculated, errSignatureRecalculated := calculateSignature(
-		hashFunc, secret, joinParts(base64Header, base64Payload),
-	)
-	if errSignatureRecalculated != nil {
-		return nil, errSignatureRecalculated
-	}
-
-	if !bytes.Equal(signature, signatureRecalculated) {
-		return nil, ErrBadSignature
+	if isValid, err := isSignatureValid(algoString, base64Header, base64Payload, signature, secret); !isValid || err != nil {
+		return nil, err
 	}
 
 	j := New(algoString, secret)
