@@ -110,10 +110,10 @@ func TestIsSignatureValid(t *testing.T) {
 		},
 		{
 			testId:          "tokenTest#5",
-			algo:            jwt.AlgoHS256,
+			algo:            jwt.AlgoHS512,
 			secret:          []byte{1, 2, 3, 4, 5, 6, 7},
 			token:           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.dNytVsNoufC7XNn3CXbkdorOqGwfCv2MfPVIcRJykFk",
-			expectedIsValid: true,
+			expectedIsValid: false,
 		},
 	}
 
